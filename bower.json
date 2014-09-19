@@ -13,7 +13,7 @@
     "grid",
     "spring-data-rest"
   ],
-  
+
   "license": "MIT",
   "homepage": "https://github.com/flado/angular-crud-rest-bower",
   "ignore": [
@@ -22,5 +22,11 @@
     "bower_components",
     "test",
     "tests"
-  ]
+  ],
+  "dependencies": {
+    "angular": "~1.2.20",
+    "ui-bootstrap-tpls": "~0.10.0",
+    "toastr": "~2.0.1",
+    "jquery": "~1.10.0"
+  }
 }
