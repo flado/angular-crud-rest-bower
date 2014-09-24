@@ -1,5 +1,6 @@
-/*! crud-grid - v0.0.11 - 2014-09-24
-* Copyright (c) Florin.Adochiei@gmail.com 2014; Licensed  */
+/*! crud-grid - v0.0.17 - 2014-09-24
+* https://github.com/flado/angular-crud-rest
+* Copyright (c) Florin.Adochiei@gmail.com 2014; Licensed MIT */
 angular.module('angular.crud.grid', []).run(['$templateCache', function($templateCache) {
   $templateCache.put("crud-grid.tpl.html",
     "<!-- Search filter -->\n" +
