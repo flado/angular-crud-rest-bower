@@ -1,10 +1,7 @@
-/*! crud-grid - v0.0.1 - 2014-09-19
+/*! crud-grid - v0.0.11 - 2014-09-24
 * Copyright (c) Florin.Adochiei@gmail.com 2014; Licensed  */
 angular.module('angular.crud.grid', []).run(['$templateCache', function($templateCache) {
   $templateCache.put("crud-grid.tpl.html",
-    "<div ng-show=\"loading\">Loading Data...</div>\n" +
-    "\n" +
-    "\n" +
     "<!-- Search filter -->\n" +
     "<div accordion ng-if=\"searchRequired\">\n" +
     "    <div accordion-group is-open=\"isopen\">\n" +
@@ -48,6 +45,9 @@ angular.module('angular.crud.grid', []).run(['$templateCache', function($templat
     "<table class=\"crud-grid table table-hover table-bordered table-condensed \">\n" +
     "    <thead>\n" +
     "        <tr class=\"navigation\">\n" +
+    "            <th colspan=\"3\" ng-show=\"loading\">\n" +
+    "                <i class=\"glyphicon glyphicon-refresh spin\"></i> Please wait while loading data...\n" +
+    "            </th>\n" +
     "            <th colspan=\"{{gridOptions.columnDefs.length + 1}}\">\n" +
     "                <pagination total-items=\"pagination.totalItems\"\n" +
     "                    page=\"pagination.currentPage\" items-per-page=\"pagination.itemsPerPage\"\n" +
@@ -60,14 +60,15 @@ angular.module('angular.crud.grid', []).run(['$templateCache', function($templat
     "                    <span class=\"glyphicon glyphicon-plus\"></span>\n" +
     "                </div>\n" +
     "            </th>\n" +
-    "\n" +
-    "            <th class=\"{{col.width}}\" ng-repeat=\"col in gridOptions.columnDefs\"  ng-click=\"setViewOrderBy(col.field)\">\n" +
-    "                <div>\n" +
+    "            <th class=\"{{col.width}}\" ng-repeat=\"col in gridOptions.columnDefs\" >\n" +
+    "                <!-- sortable header -->\n" +
+    "                <div ng-if=\"col.sortable\" ng-click=\"setViewOrderBy(col)\">\n" +
     "                    {{col.displayName}}\n" +
     "                    <i class=\"glyphicon\" ng-class=\"{'glyphicon-sort-by-alphabet': viewOrderBy.sort == 'asc', 'glyphicon-sort-by-alphabet-alt': viewOrderBy.sort == 'desc'}\" ng-show=\"viewOrderBy.field == col.field\"></i>\n" +
     "                </div>\n" +
+    "                <!-- not sortable header -->\n" +
+    "                <div  ng-if=\"!col.sortable\">{{col.displayName}}</div>\n" +
     "            </th>\n" +
-    "\n" +
     "        </tr>\n" +
     "    </thead>\n" +
     "\n" +
@@ -92,7 +93,7 @@ angular.module('angular.crud.grid', []).run(['$templateCache', function($templat
     "            </span>\n" +
     "        </td>\n" +
     "    </tr>\n" +
-    "    <tr ng-repeat=\"object in objects | orderBy: viewOrderBy.field: viewOrderBy.sort == 'desc'\">\n" +
+    "    <tr ng-repeat=\"object in objects\">\n" +
     "        <!-- Edit Actions -->\n" +
     "        <td ng-if=\"!readOnly\">\n" +
     "            <div class=\"btn-toolbar\" ng-show=\"object.$edit == null\">\n" +
@@ -127,6 +128,12 @@ angular.module('angular.crud.grid', []).run(['$templateCache', function($templat
     "        </td>\n" +
     "    </tr>\n" +
     "    <tr class=\"navigation\">\n" +
+    "        <td>\n" +
+    "            <button class=\"btn btn-primary\" ng-click=\"refresh()\">\n" +
+    "                <i class=\"glyphicon glyphicon-refresh\" ng-show=\"!loading\"></i>\n" +
+    "                <i class=\"glyphicon glyphicon-refresh spin\" ng-show=\"loading\"></i> Refresh\n" +
+    "            </button>\n" +
+    "        </td>\n" +
     "        <td colspan=\"{{gridOptions.columnDefs.length+1}}\">\n" +
     "                <pagination total-items=\"pagination.totalItems\"\n" +
     "                    page=\"pagination.currentPage\" items-per-page=\"pagination.itemsPerPage\"\n" +
@@ -187,6 +194,14 @@ angular.module('angular.crud.grid')
             scope.searchFilter = {};
 
             scope.gridOptions = scope.$eval(attrs.gridOptions);
+            for(var i=0; i < scope.gridOptions.columnDefs.length; i++) {
+                var col = scope.gridOptions.columnDefs[i];
+                if (col.sortable === undefined) {
+                    col.sortable = true; //by default every column is sortable
+                } else {
+                    $log.debug('# field: ', col.field, ' -> NOT SORTABLE');
+                }
+            }
 
             if (!scope.gridOptions.baseUrl) {
                 scope.gridOptions.baseUrl = 'api';
@@ -429,17 +444,52 @@ angular.module('angular.crud.grid')
                 }
                 return valid;
             };
+            
 
-            scope.setViewOrderBy = function (field) {
-                $log.debug('>> setViewOrderBy: ', field);
-
+            scope.setViewOrderBy = function (col) {
+                var field = col.field;
+                $log.debug('>> setViewOrderBy: ', field, ' >> scope.orderBy: ', scope.orderBy);
                 for(var i=0; i < scope.objects.length; i++) {
                     scope.objects[i].$animated = '';
                 }
 
                 var asc = scope.viewOrderBy.field === field ? !(scope.viewOrderBy.sort == 'asc') : true;
                 scope.viewOrderBy = { field: field, sort: asc ? 'asc' : 'desc' };
+                //scope.viewOrderBy.viewOrdering = true;
+                scope.orderBy.length = 0;
+                scope.orderBy.push(scope.viewOrderBy);
+
+
+                /*var updated = false;
+                for(var i=0; i < scope.orderBy.length; i++) {
+                    $log.debug('###### i=' + i, scope.orderBy[i], ' ## VS ## ', scope.viewOrderBy, ' Equals ? ', (scope.orderBy[i].field === scope.viewOrderBy.field));
+                    if (scope.orderBy[i].field === scope.viewOrderBy.field) {
+                        $log.debug('REPLACE: ', scope.orderBy[i], ' WITH: ', scope.viewOrderBy);
+                        scope.orderBy[i] = scope.viewOrderBy;
+                        updated = true;
+                        break;
+                    } else if (scope.orderBy[i].viewOrdering) {
+                        scope.orderBy.splice(i, 1);//remove existing field from criteria
+                        i--;
+                    }
+                }
+                if (!updated) {
+                    $log.debug('PUSH: ',  scope.viewOrderBy);
+                    scope.orderBy.push(scope.viewOrderBy);
+                }
+*/
                 $log.debug('>> setViewOrderBy - scope.viewOrderBy: ', scope.viewOrderBy);
+                $log.debug('>> setViewOrderBy - scope.orderBy: ', scope.orderBy);
+                //get data sorted by new field
+                scope.getData(function () {
+                    scope.loading = false;
+                });
+            };
+
+            scope.refresh = function() {
+                scope.getData(function () {
+                    scope.loading = false;
+                });
             };
 
             scope.hasError = function(formField, validation) {
