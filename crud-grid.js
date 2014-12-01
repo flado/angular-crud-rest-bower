@@ -1,58 +1,66 @@
-/*! crud-grid - v0.0.23 - 2014-09-24
+/*! crud-grid - v1.0.1 - 2014-12-01
 * https://github.com/flado/angular-crud-rest
 * Copyright (c) Florin.Adochiei@gmail.com 2014; Licensed MIT */
 angular.module('angular.crud.grid', []).run(['$templateCache', function($templateCache) {
   $templateCache.put("crud-grid.tpl.html",
     "<!-- Search filter -->\n" +
-    "<div accordion ng-if=\"searchRequired\">\n" +
-    "    <div accordion-group is-open=\"isopen\">\n" +
-    "        <div accordion-heading>\n" +
-    "            Search Filter:\n" +
-    "                <span ng-repeat=\"col in gridOptions.columnDefs\">\n" +
-    "                    <span class=\"filterText\" ng-if=\"col.searchable\" ng-show=\"searchFilter[col.field]\">{{col.displayName}} = {{searchFilter[col.field]}}</span>\n" +
-    "                </span>\n" +
-    "             <i class=\"pull-right glyphicon\" ng-class=\"{'glyphicon-chevron-down': isopen, 'glyphicon-chevron-right': !isopen}\"></i>\n" +
+    "\n" +
+    "<div class=\"panel panel-default\" ng-if=\"hasSearchPanel\">\n" +
+    "  <div class=\"panel-heading\">\n" +
+    "    <div class=\"row\">\n" +
+    "        <h3 class=\"col-sm-2 panel-title\">Search Filter</h3>\n" +
+    "        <div class=\"col-sm-10\">\n" +
+    "            <div class=\"btn-group pull-right\">\n" +
+    "                <button class=\"btn btn-default\" type=\"button\" name=\"searchLogic\" ng-model=\"searchLogic.and\" btn-radio=\"false\">OR</button>\n" +
+    "                <button class=\"btn btn-default\" type=\"button\" name=\"searchLogic\" ng-model=\"searchLogic.and\" btn-radio=\"true\">AND</button>\n" +
+    "            </div>\n" +
     "        </div>\n" +
-    "        <table class=\"table table-condensed \">\n" +
-    "            <thead>\n" +
-    "                <tr>\n" +
-    "                    <th class=\"col-md-1\">\n" +
-    "                        &nbsp;\n" +
-    "                    </th>\n" +
-    "                    <th class=\"{{col.width}}\" ng-repeat=\"col in gridOptions.columnDefs\">\n" +
-    "                        <div ng-show=\"col.searchable\">{{col.displayName}}</div>\n" +
-    "                        <div ng-show=\"!col.searchable\">&nbsp;</div>\n" +
-    "                    </th>\n" +
-    "                </tr>\n" +
-    "            </thead>\n" +
-    "            <tbody>\n" +
-    "                <tr>\n" +
-    "                    <td>\n" +
-    "                        <button class=\"btn btn-primary\" ng-click=\"search()\">Search</button>\n" +
-    "                    </td>\n" +
-    "                    <td ng-repeat=\"col in gridOptions.columnDefs\">\n" +
-    "                        <span ng-if=\"!col.searchable\">&nbsp;</span>\n" +
-    "                        <span ng-if=\"col.searchable\">\n" +
-    "                            <input type=\"text\" class=\"form-control\" placeholder=\"{{col.displayName}}\" ng-model=\"searchFilter[col.field]\" />\n" +
-    "                        </span>\n" +
-    "                    </td>\n" +
-    "                </tr>\n" +
-    "            </tbody>\n" +
-    "        </table>\n" +
     "    </div>\n" +
+    "  </div>\n" +
+    "\n" +
+    "\n" +
+    "\n" +
+    "  <div class=\"panel-body form-horizontal\" ng-form=\"searchForm\">\n" +
+    "      <div ng-repeat=\"col in gridOptions.columnDefs\">\n" +
+    "        <div class=\"form-group\" ng-if=\"col.searchable\">\n" +
+    "            <label class=\"col-sm-2 control-label\">{{col.displayName}}</label>\n" +
+    "            <div class=\"col-sm-10\">\n" +
+    "              <input type=\"text\" ng-model=\"searchFilter[col.field]\"\n" +
+    "                dynamic-name=\"col.field\" class=\"form-control\"\n" +
+    "                placeholder=\"{{col.displayName}}\" ng-class=\"{'has-error': hasError(searchForm[col.field]) }\" ng-pattern=\"{{col.validPattern}}\">\n" +
+    "            </div>\n" +
+    "        </div>\n" +
+    "      </div>\n" +
+    "      <div class=\"form-group\">\n" +
+    "        <div class=\"col-sm-offset-2 col-sm-10\">\n" +
+    "          <button ng-click=\"search()\" class=\"btn btn-primary\"><span class=\"glyphicon glyphicon-search\"></span> Search</button>\n" +
+    "        </div>\n" +
+    "      </div>\n" +
+    "  </div>\n" +
     "</div>\n" +
     "\n" +
     "<!-- page with data -->\n" +
     "<table class=\"crud-grid table table-hover table-bordered table-condensed \">\n" +
     "    <thead>\n" +
     "        <tr class=\"navigation\">\n" +
-    "            <th colspan=\"3\" ng-show=\"loading\">\n" +
-    "                <i class=\"glyphicon glyphicon-refresh spin\"></i> Please wait while loading data...\n" +
-    "            </th>\n" +
-    "            <th colspan=\"{{gridOptions.columnDefs.length + 1}}\">\n" +
-    "                <pagination total-items=\"pagination.totalItems\"\n" +
-    "                    page=\"pagination.currentPage\" items-per-page=\"pagination.itemsPerPage\"\n" +
-    "                    max-size=\"pagination.maxSize\" class=\"pull-right\" rotate=\"true\" num-pages=\"pagination.numPages\"></pagination>\n" +
+    "            <th colspan=\"{{headerColSpan}}\">\n" +
+    "                <div ng-show=\"loading\"><i class=\"glyphicon glyphicon-refresh spin\"></i> Please wait while loading data...{{se}}<br></div>\n" +
+    "                <div ng-show=\"!(searchFilter | allPropertiesEmpty)\">\n" +
+    "                    <span class=\"glyphicon glyphicon-search\"></span> : <span ng-show=\"searchLogic.and\">AND</span><span ng-show=\"!searchLogic.and\">OR</span>\n" +
+    "                    <div ng-repeat=\"col in gridOptions.columnDefs\">\n" +
+    "                        <li ng-if=\"col.searchable && col.type=='S'\">\"{{col.displayName}}\" contains:  {{ searchFilter[col.field] }}</li>\n" +
+    "                        <li ng-if=\"col.searchable && col.type!='S'\">\"{{col.displayName}}\" = {{ searchFilter[col.field] }}</li>\n" +
+    "                    </div>\n" +
+    "                </div>\n" +
+    "                <div ng-show=\"!loading\" class=\"pull-right\">\n" +
+    "                    <!-- Select pagination size -->\n" +
+    "                    Items per page:&nbsp;\n" +
+    "                    <select class=\"form-control\" ng-change=\"refresh()\" style=\"width: 90px; display: inline\" ng-model=\"pagination.itemsPerPage\" ng-options=\"size for size in pageSizes\"></select>\n" +
+    "                    &nbsp;&nbsp;&nbsp;\n" +
+    "                    <pagination total-items=\"pagination.totalItems\"\n" +
+    "                        page=\"pagination.currentPage\" items-per-page=\"pagination.itemsPerPage\"\n" +
+    "                        max-size=\"pagination.maxSize\" class=\"pull-right\" rotate=\"true\" num-pages=\"pagination.numPages\"></pagination>\n" +
+    "                </div>\n" +
     "            </th>\n" +
     "        </tr>\n" +
     "        <tr class=\"header\">\n" +
@@ -61,7 +69,7 @@ angular.module('angular.crud.grid', []).run(['$templateCache', function($templat
     "                    <span class=\"glyphicon glyphicon-plus\"></span>\n" +
     "                </div>\n" +
     "            </th>\n" +
-    "            <th class=\"{{col.width}}\" ng-repeat=\"col in gridOptions.columnDefs\" >\n" +
+    "            <th class=\"{{col.width}}\" ng-repeat=\"col in gridOptions.columnDefs\" ng-if=\"!col.hide\">\n" +
     "                <!-- sortable header -->\n" +
     "                <div ng-if=\"col.sortable\" ng-click=\"setViewOrderBy(col)\">\n" +
     "                    {{col.displayName}}\n" +
@@ -87,14 +95,20 @@ angular.module('angular.crud.grid', []).run(['$templateCache', function($templat
     "            </div>\n" +
     "        </td>\n" +
     "        <!-- Object details in ADD mode : ['{{col.field}}'] -->\n" +
-    "        <td ng-repeat=\"col in gridOptions.columnDefs\" >\n" +
-    "            <span ng-if=\"col.readOnly\"></span>\n" +
+    "        <td ng-repeat=\"col in gridOptions.columnDefs\" ng-if=\"!col.hide\">\n" +
+    "\n" +
+    "            <span ng-if=\"col.readOnly && !col.defaultOnAdd\"></span>\n" +
+    "            <span ng-if=\"col.readOnly && col.defaultOnAdd\" ng-init=\"object[col.field]=col.defaultOnAdd\">{{col.defaultOnAdd}}</span>\n" +
+    "            \n" +
     "            <span ng-if=\"!col.readOnly\">\n" +
-    "                <input type=\"text\" dynamic-name=\"col.field\" class=\"form-control\" placeholder=\"{{col.displayName}}\" ng-class=\"{'has-error': hasError(addForm[col.field]) }\" ng-model=\"object[col.field]\" ng-required=\"{{col.required}}\" ng-pattern=\"{{col.validPattern}}\" />\n" +
+    "                <input type=\"text\" dynamic-name=\"col.field\"\n" +
+    "                    class=\"form-control\" placeholder=\"{{col.displayName}}\"\n" +
+    "                    ng-class=\"{'has-error': hasError(addForm[col.field]) }\"\n" +
+    "                    ng-model=\"object[col.field]\" ng-required=\"{{col.required}}\" ng-pattern=\"{{col.validPattern}}\" />\n" +
     "            </span>\n" +
     "        </td>\n" +
     "    </tr>\n" +
-    "    <tr ng-repeat=\"object in objects\">\n" +
+    "    <tr ng-repeat=\"object in objects\" ng-if=\"!col.hide\">\n" +
     "        <!-- Edit Actions -->\n" +
     "        <td ng-if=\"!readOnly\">\n" +
     "            <div class=\"btn-toolbar\" ng-show=\"object.$edit == null\">\n" +
@@ -118,13 +132,19 @@ angular.module('angular.crud.grid', []).run(['$templateCache', function($templat
     "                </div>\n" +
     "            </div>\n" +
     "        </td>\n" +
+    "\n" +
     "        <!-- Object details -->\n" +
     "\n" +
-    "        <td ng-repeat=\"col in gridOptions.columnDefs\">\n" +
+    "        <td ng-repeat=\"col in gridOptions.columnDefs\" ng-if=\"!col.hide\">\n" +
     "            <span ng-if=\"col.readOnly\" >{{object[col.field]}}</span>\n" +
     "            <span ng-if=\"!col.readOnly\" ng-show=\"object.$edit == null\" ng-class=\"object.$animated\">{{object[col.field]}}</span>\n" +
     "            <ng-form name=\"editForm\" ng-if=\"editMode\">\n" +
-    "                <input class=\"form-control\" ng-if=\"isInputForm(object, col)\" ng-model=\"object.$edit[col.field]\" ng-required=\"{{col.required}}\" ng-pattern=\"{{col.validPattern}}\" model-change-blur />\n" +
+    "                <input class=\"form-control\" ng-if=\"isInputForm(object, col)\"\n" +
+    "                    ng-model=\"object.$edit[col.field]\"\n" +
+    "                    ng-required=\"{{col.required}}\"\n" +
+    "                    ng-init=\"object.$edit['$old_' + col.field]=object.$edit[col.field]\"\n" +
+    "                    ng-change=\"valueChanged(col.field, object.$edit)\"\n" +
+    "                    ng-pattern=\"{{col.validPattern}}\" model-change-blur />\n" +
     "            </ng-form>\n" +
     "        </td>\n" +
     "    </tr>\n" +
@@ -135,10 +155,14 @@ angular.module('angular.crud.grid', []).run(['$templateCache', function($templat
     "                <i class=\"glyphicon glyphicon-refresh spin\" ng-show=\"loading\"></i> Refresh\n" +
     "            </button>\n" +
     "        </td>\n" +
-    "        <td colspan=\"{{gridOptions.columnDefs.length+1}}\">\n" +
+    "        <td colspan=\"{{headerColSpan}}\">\n" +
+    "            <span ng-show=\"!loading\" class=\"pull-left\"><i class=\"glyphicon glyphicon-hand-right\"></i> Total Items: {{pagination.totalItems}}</span>\n" +
+    "            <span ng-show=\"!loading\" class=\"pull-right\">                \n" +
     "                <pagination total-items=\"pagination.totalItems\"\n" +
-    "                    page=\"pagination.currentPage\" items-per-page=\"pagination.itemsPerPage\"\n" +
-    "                    max-size=\"pagination.maxSize\" class=\"pull-right\" rotate=\"true\" num-pages=\"pagination.numPages\"></pagination>\n" +
+    "                        page=\"pagination.currentPage\" items-per-page=\"pagination.itemsPerPage\"\n" +
+    "                        max-size=\"pagination.maxSize\" class=\"pull-right\" rotate=\"true\" num-pages=\"pagination.numPages\"></pagination>\n" +
+    "            </div>\n" +
+    "        </td>\n" +
     "\n" +
     "        </td>\n" +
     "    </tr>\n" +
@@ -150,7 +174,10 @@ angular.module('angular.crud.grid', []).run(['$templateCache', function($templat
     "</div> <!-- .modal-header -->\n" +
     "\n" +
     " <div class=\"modal-body\"> 	\n" +
-    " 	Are you sure you want to delete this record?\n" +
+    " 	Are you sure you want to delete this record?<br><br>\n" +
+    " 	<ul>\n" +
+    " 	  <li ng-repeat=\"col in gridOptions.columnDefs\" ng-if=\"!col.hide\"><b>{{col.displayName}}</b> = {{object[col.field]}}</li>\n" +
+    " 	</ul>\n" +
     "</div> <!-- .modal-body   -->\n" +
     "\n" +
     "<div class=\"modal-footer\">\n" +
@@ -163,13 +190,41 @@ angular.module('angular.crud.grid', []).run(['$templateCache', function($templat
 
 angular.module('angular.crud.grid')
 
-.directive('crudGrid', function ($log, $http, $injector, $timeout) {
+.filter('isEmpty', function () {
+    var bar;
+    return function (obj) {
+        for (bar in obj) {
+            if (obj.hasOwnProperty(bar)) {
+                return false;
+            }
+        }
+        return true;
+    };
+})
+
+
+.filter('allPropertiesEmpty', function () {
+    var bar;
+    return function (obj) {
+        for (bar in obj) {
+            if (obj.hasOwnProperty(bar)) {
+                if (obj[bar] && obj[bar].trim().length > 0) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    };
+})
+
+.directive('crudGrid', function ($log, $http, $injector, $timeout, $filter) {
     return {
         restrict: 'A',
         replace: false,
         scope: {
             readOnly: '=',
             notificationService: '=',
+            serverValidationService: '=',
             baseUrl: '='
         },
 
@@ -178,8 +233,6 @@ angular.module('angular.crud.grid')
 
         link: function(scope, elem, attrs, formCtrl) {
             $log.debug('>>>>> link <<<<<<<<<<', formCtrl);
-
-
 
             if (toastr) {
                 toastr.options.closeButton = true;
@@ -192,11 +245,57 @@ angular.module('angular.crud.grid')
             scope.editMode = false;
             scope.previous = "<< Previous";
             scope.next = "Next >>";
-            scope.searchFilter = {};
 
+            scope.pageSizes = [10, 25, 50, 100, 200, 500, 1000, 5000, 10000, 20000];
+
+            scope.colDefMap = {}; //key: field name
+
+            scope.searchFilter = {};
             scope.gridOptions = scope.$eval(attrs.gridOptions);
+
+            if (scope.readOnly) {
+                scope.headerColSpan = scope.gridOptions.columnDefs.length;
+            } else {
+                scope.headerColSpan = scope.gridOptions.columnDefs.length + 1;
+            }
+
+            //TODO: validate gridOptions mandatory properties & log default values
+
+            if (scope.gridOptions.searchConfig) {
+                if (scope.gridOptions.searchConfig.hideSearchPanel) {
+                    scope.hasSearchPanel = false;
+                } else {
+                    scope.hasSearchPanel = true;
+                }
+            }
+            //validate searchConfig
+            if (scope.hasSearchPanel) {
+                var cfg = scope.gridOptions.searchConfig;
+                if (cfg.fields.length == 0) {
+                    throw new Error("searchConfig.fields is missing");
+                }
+                if (cfg.fields.length == 1) {
+                    if (cfg.filters.length != 1) {
+                        throw new Error("searchConfig.filters should define a single URL for field: " + cfg.fields[0]);
+                    }
+                }
+                if (cfg.fields.length > 1) {
+                    if (cfg.filters.length != 2) {
+                        throw new Error("searchConfig.filters should specify both AND + OR filters");
+                    }
+                }
+            }
+
             for(var i=0; i < scope.gridOptions.columnDefs.length; i++) {
                 var col = scope.gridOptions.columnDefs[i];
+                //derive if col is searchable
+                if (scope.hasSearchPanel && scope.gridOptions.searchConfig.fields.indexOf(col.field) > -1) {
+                    if (!col.hasOwnProperty('searchable')) {
+                        col.searchable = true;
+                    }
+                    scope.searchFilter[col.field] = '';//empty string
+                }
+                scope.colDefMap[col.field] = col;
                 if (col.sortable === undefined) {
                     col.sortable = true; //by default every column is sortable
                 } else {
@@ -210,11 +309,11 @@ angular.module('angular.crud.grid')
 
             scope.orderBy =  scope.gridOptions.orderBy ? scope.gridOptions.orderBy : [];
             scope.viewOrderBy =  [];
-            scope.searchFilter = scope.gridOptions.searchFilter;
-            scope.searchFilterUrl = scope.gridOptions.searchFilterUrl;
-
-            //pagination.maxSize = 10; //number of visible page buttons
-            scope.pagination = {itemsPerPage : scope.gridOptions.itemsPerPage};
+            var maxSizePagination = 10; //number of visible page buttons
+            if (scope.gridOptions.maxSize) {
+                maxSizePagination = scope.gridOptions.maxSize;
+            }
+            scope.pagination = {itemsPerPage : scope.gridOptions.itemsPerPage, maxSize: maxSizePagination};
 
             var getSortParams = function() {
                 var result = [];
@@ -225,25 +324,13 @@ angular.module('angular.crud.grid')
                 return result;
             };
 
-            scope.searchRequired = function() {
-                $log.debug('searchRequired: ', scope.gridOptions.columnDefs);
-                for(var i=0; i < scope.gridOptions.columnDefs.length; i++) {
-                    col = scope.gridOptions.columnDefs[i];
-                    //$log.debug('searchRequired col= ', col);
-                    if (col.searchable) {
-                        return true;
-                    }
-                }
-                return false;
-            }();
+            scope.searchLogic = { and: false }; //default search logic is OR if none specified in config
 
             scope.$watch('pagination.currentPage', function(oldValue, newValue){
                 $log.debug(">> pagination.currentPage: ", oldValue, ' -> ', newValue); //trigger to get new data here
-                //if (oldValue !== newValue) {
-                    scope.getData(function () {
-                        scope.loading = false;
-                    });
-                //}
+                scope.getData(function () {
+                    scope.loading = false;
+                });
             });
             //set start page index
             scope.pagination.currentPage = 1;
@@ -259,25 +346,57 @@ angular.module('angular.crud.grid')
                 }
             };
 
+
             scope.getData = function (cb) {
                 $log.debug('>> getData <<');
                 scope.loading = true;
-                var useSearch = false;
+                var hasSearchFilter = false;
                 var queryParams = {page: scope.pagination.currentPage-1, size: scope.pagination.itemsPerPage}; //Spring Data pagination starts at 0 index
-                for (var col in scope.searchFilter) {
-                    if (scope.searchFilter.hasOwnProperty(col)) {
-                        if (scope.searchFilter[col].trim().length > 0) {
-                            queryParams[col] = scope.searchFilter[col].trim();
-                            useSearch = true;
+
+                //check if serachFilter has all props empty
+                hasSearchFilter = !$filter('allPropertiesEmpty')(scope.searchFilter);
+                var searchPostfix = '';
+
+                if (hasSearchFilter) {
+                    for (var field in scope.searchFilter) {
+                        if (scope.searchFilter.hasOwnProperty(field)) {
+                            if (scope.searchFilter[field] &&  scope.searchFilter[field].trim().length > 0) {
+                                if (scope.colDefMap[field].type  == 'S') { //search by partial content
+                                    queryParams[field] = '%' + scope.searchFilter[field].trim() + '%';
+                                } else {
+                                    queryParams[field] = scope.searchFilter[field].trim();
+                                }
+
+                            } else if (scope.colDefMap[field].type  == 'S'){ //default search value for Strings
+                                queryParams[field] = '%';
+                            }
                         }
                     }
-                }
-                var searchPostfix = '';
-                if (useSearch) {
-                    if (!scope.searchFilterUrl) {
-                        throw new Error("searchFilterUrl config not found");
+                    var filters = scope.gridOptions.searchConfig.filters;
+                    if (filters.length > 1) {
+                        for(var i=0; i < filters.length; i++) {
+                            if ((filters[i].logic == "AND" && scope.searchLogic.and) || (filters[i].logic == "OR" && !scope.searchLogic.and) ) {
+                                scope.searchFilterUrl = filters[i].url;
+                                break;
+                            }
+                        }
                     } else {
-                        searchPostfix = '/search' + scope.searchFilterUrl; //if search URL provided in config
+                        scope.searchFilterUrl = filters[0].url;
+                    }
+                    searchPostfix = '/search' + scope.searchFilterUrl;
+                }
+                //check fo default search filter (eg. discriminator column)
+                if (scope.gridOptions.searchConfig) {
+                    var defaultFilter = scope.gridOptions.searchConfig.defaultFilter;
+                    if (defaultFilter) {
+                        if (hasSearchFilter) {
+                            if (!queryParams[defaultFilter.fieldName]) {
+                                queryParams[defaultFilter.fieldName] = defaultFilter.fieldValue;
+                            }
+                        } else {
+                            queryParams[defaultFilter.fieldName] = defaultFilter.fieldValue;
+                            searchPostfix = '/search' + defaultFilter.url;
+                        }
                     }
                 }
 
@@ -287,7 +406,12 @@ angular.module('angular.crud.grid')
                     queryParams.sort = sort;
                 }
 
-                $http({ method: 'GET', url: scope.gridOptions.baseUrl + '/' + scope.gridOptions.resourceName + searchPostfix, params: queryParams })
+                var myData = {};
+                var req = { method: 'GET', url: scope.gridOptions.baseUrl + '/' + scope.gridOptions.resourceName + searchPostfix, params: queryParams };
+                myData.resourceName = scope.gridOptions.resourceName;
+                myData.request = req;
+
+                $http(req)
                     .success(function (data, status) {
                         $log.debug('successGetCallback:', data);
                         if (data._embedded) {
@@ -303,7 +427,9 @@ angular.module('angular.crud.grid')
                         if (cb) cb();
                     })
                     .error(function(data, status) {
-                        scope.notificationService.notify('LIST', status, data);
+                        if (cb) cb();
+                        myData.response = data;
+                        scope.notificationService.notify('LIST', status, myData);
                     });
             };
 
@@ -336,21 +462,60 @@ angular.module('angular.crud.grid')
                 $timeout(function() {
                     // TO make sure the validation cycle has completed before going to save
                     if (isFormValid()) { //only one addForm per page
-                        $http({ method: 'POST', url: scope.gridOptions.baseUrl + '/' + scope.gridOptions.resourceName, data: scope.object})
-                            .success(function(data, status, headers, config) {
-                                $log.debug('successPostCallback: ', data);
-                                scope.notificationService.notify('ADD', status, data);
-                                scope.getData(function () {
-                                    scope.loading = false;
-                                    scope.toggleAddMode();
-                                });
-                            })
-                           .error(function(data, status) {
-                                scope.notificationService.notify('ADD', status, data);
-                            });
+                        //add default values (if any)
+                        for(var i=0; i < scope.gridOptions.columnDefs.length; i++) {
+                            var col = scope.gridOptions.columnDefs[i];
+                            if (col.hide && col.defaultOnAdd) {
+                                scope.object[col.field] = col.defaultOnAdd;
+                            }
+                        }
+
+                        //check for validation service
+                        if (scope.serverValidationService) {
+                            //validateAction returns promise
+                            scope.serverValidationService.validateAction('ADD', scope.object, scope.gridOptions.resourceName).then(
+                                //promise ok
+                                function(result){
+                                    if (!result.valid) {
+                                        scope.object.$serverValidationMessage = result.message;
+                                        scope.notificationService.notify('ADD', 409, { response: scope.object });
+                                    } else {
+                                        doInsert(scope.object, $http);
+                                    }
+                                },
+                                //promise error
+                                function(reason) {
+                                    scope.notificationService.notify('ADD', 500, { response: reason});
+                                }
+                            );
+                        } else { //no server side validation required
+                            doInsert(scope.object, $http);
+                        }
                     }
                 })
             };
+
+            var doInsert = function(insertObj, $http) {
+                var req = { method: 'POST', url: scope.gridOptions.baseUrl + '/' + scope.gridOptions.resourceName, data: insertObj};
+                var myData = {};
+                myData.resourceName = scope.gridOptions.resourceName;
+                myData.request = req;
+                $http(req)
+                .success(function(data, status, headers, config) {
+                    $log.debug('successPostCallback: ', data);
+                    myData.response = data;
+                    scope.notificationService.notify('ADD', status, myData);
+
+                    scope.getData(function () {
+                        scope.loading = false;
+                        scope.toggleAddMode();
+                    });
+                })
+                .error(function(data, status) {
+                    myData.response = data;
+                    scope.notificationService.notify('ADD', status, myData);
+                });
+            }
 
             scope.deleteObject = function (object) {
                 var modal = $injector.get('$modal');
@@ -358,20 +523,30 @@ angular.module('angular.crud.grid')
                     var modalInstance = modal.open({
                         templateUrl: 'delete-confirm.tpl.html',
                         controller: function($scope, $modalInstance) {
+                            $scope.object = object;
+                            $scope.gridOptions = scope.gridOptions;
+
                             $scope.cancel = function() {
                                 $modalInstance.dismiss('cancel');
                             };
                             $scope.delete = function() {
                                 //$http.delete(object._links.self.href).success( successCallback ).error( errorCallback ); //DOES NOT WORK IN IE
-                                $http({method: 'DELETE', url: object._links.self.href })
+                                var req = {method: 'DELETE', url: object._links.self.href };
+                                var myData = {};
+                                myData.resourceName = scope.gridOptions.resourceName;
+                                myData.request = req;
+                                $http(req)
                                     .success(function(data, status) {
                                         $modalInstance.close(data);
-                                        scope.notificationService.notify('DELETE', status, data);
+                                        myData.response = data;
+                                        //
+                                        scope.notificationService.notify('DELETE', status, myData);
                                         scope.getData(function () {
                                             scope.loading = false;
                                         });
                                     }).error(function(data, status) {
-                                        scope.notificationService.notify('DELETE', status, data);
+                                        myData.response = data;
+                                        scope.notificationService.notify('DELETE', status, myData);
                                     });
                             };
                         }
@@ -379,15 +554,21 @@ angular.module('angular.crud.grid')
                 } else { //no $modal found
                     var r = confirm('Are you sure you want to delete this record?');
                     if (r == true) {
-                        $http({method: 'DELETE', url: object._links.self.href })
+                        var req = {method: 'DELETE', url: object._links.self.href };
+                        var myData = {};
+                        myData.resourceName = scope.gridOptions.resourceName;
+                        myData.request = req;
+                        $http(req)
                                     .success(function(data, status) {
                                         $modalInstance.close(data);
-                                        scope.notificationService.notify('DELETE', status, data);
+                                        myData.response = data;
+                                        scope.notificationService.notify('DELETE', status, myData);
                                         scope.getData(function () {
                                             scope.loading = false;
                                         });
                                     }).error(function(data, status) {
-                                        scope.notificationService.notify('DELETE', status, data);
+                                        myData.response = data;
+                                        scope.notificationService.notify('DELETE', status, myData);
                                     });
                     }
 
@@ -408,29 +589,60 @@ angular.module('angular.crud.grid')
                 $timeout(function() {
                     // use $timeout tO make sure the validation cycle has completed before going to save
                     if (isFormValid()) {
-                        var cleanEditObj = cleanObject(editObj);
-                        //$http.put(editObj._links.self.href, cleanEditObj)
-                        $http({ method: 'PUT', url: editObj._links.self.href, data: cleanEditObj })
-                            .success( function(data, status) {
-                                scope.notificationService.notify('UPDATE', status, data);
-                                scope.getData(function () {
-                                    scope.loading = false;
-                                    for(var i=0; i < scope.objects.length; i++) {
-                                        if (scope.objects[i]._links.self.href == editObj._links.self.href) {
-                                            scope.objects[i].$animated = 'animated flash';
-                                        }
+
+                        if (scope.serverValidationService) {
+                            //validateAction returns promise
+                            scope.serverValidationService.validateAction('UPDATE', editObj, scope.gridOptions.resourceName).then(
+                                //promise ok
+                                function(result){
+                                    if (!result.valid) {
+                                        editObj.$serverValidationMessage = result.message;
+                                        scope.notificationService.notify('UPDATE', 409, { response: editObj });
+                                    } else {
+                                        doUpdate(editObj, $http);
                                     }
-                                });
-                                //scope.animateObject = editObj;
-                                //object.$animated = 'animated flash';
-                            })
-                            .error(function(data, status) {
-                                scope.animateObject = undefined;
-                                scope.notificationService.notify('UPDATE', status, data);
-                            });
+                                },
+                                //promise error
+                                function(reason) {
+                                    scope.notificationService.notify('UPDATE', 500, { response:reason });
+                                }
+                            );
+                        } else { //no server side validation required
+                            doUpdate(editObj, $http);
+                        }
                     }
                 });
             };
+
+            var doUpdate = function(editObj, $http) {
+                var cleanEditObj = cleanObject(editObj);
+                var myData = {};
+                var req = { method: 'PUT', url: editObj._links.self.href, data: cleanEditObj };
+                myData.resourceName = scope.gridOptions.resourceName;
+                myData.request = req;
+                $http(req)
+                .success( function(data, status) {
+                    myData.response = data;
+                    scope.notificationService.notify('UPDATE', status, myData);
+                    scope.getData(function () {
+                        scope.loading = false;
+                        for(var i=0; i < scope.objects.length; i++) {
+                            if (scope.objects[i]._links.self.href == editObj._links.self.href) {
+                                scope.objects[i].$animated = 'animated flash';
+                            }
+                        }
+                    });
+                })
+                .error(function(data, status) {
+                    scope.animateObject = undefined;
+                    myData.response = data;
+                    scope.notificationService.notify('UPDATE', status, myData);
+                });
+            };
+
+            scope.valueChanged = function(field, value) {
+                $log.debug('## valueChanged: ', field, value);
+            }
 
             scope.isInputForm = function(object, col) {
                 return object.$edit && !col.readOnly;
@@ -445,7 +657,7 @@ angular.module('angular.crud.grid')
                 }
                 return valid;
             };
-            
+
 
             scope.setViewOrderBy = function (col) {
                 var field = col.field;
@@ -453,34 +665,11 @@ angular.module('angular.crud.grid')
                 for(var i=0; i < scope.objects.length; i++) {
                     scope.objects[i].$animated = '';
                 }
-
                 var asc = scope.viewOrderBy.field === field ? !(scope.viewOrderBy.sort == 'asc') : true;
                 scope.viewOrderBy = { field: field, sort: asc ? 'asc' : 'desc' };
                 //scope.viewOrderBy.viewOrdering = true;
                 scope.orderBy.length = 0;
                 scope.orderBy.push(scope.viewOrderBy);
-
-
-                /*var updated = false;
-                for(var i=0; i < scope.orderBy.length; i++) {
-                    $log.debug('###### i=' + i, scope.orderBy[i], ' ## VS ## ', scope.viewOrderBy, ' Equals ? ', (scope.orderBy[i].field === scope.viewOrderBy.field));
-                    if (scope.orderBy[i].field === scope.viewOrderBy.field) {
-                        $log.debug('REPLACE: ', scope.orderBy[i], ' WITH: ', scope.viewOrderBy);
-                        scope.orderBy[i] = scope.viewOrderBy;
-                        updated = true;
-                        break;
-                    } else if (scope.orderBy[i].viewOrdering) {
-                        scope.orderBy.splice(i, 1);//remove existing field from criteria
-                        i--;
-                    }
-                }
-                if (!updated) {
-                    $log.debug('PUSH: ',  scope.viewOrderBy);
-                    scope.orderBy.push(scope.viewOrderBy);
-                }
-*/
-                $log.debug('>> setViewOrderBy - scope.viewOrderBy: ', scope.viewOrderBy);
-                $log.debug('>> setViewOrderBy - scope.orderBy: ', scope.orderBy);
                 //get data sorted by new field
                 scope.getData(function () {
                     scope.loading = false;
@@ -488,6 +677,13 @@ angular.module('angular.crud.grid')
             };
 
             scope.refresh = function() {
+                scope.getData(function () {
+                    scope.loading = false;
+                });
+            };
+
+            scope.search = function() {
+                $log.debug('## search: ', scope.searchFilter);
                 scope.getData(function () {
                     scope.loading = false;
                 });
