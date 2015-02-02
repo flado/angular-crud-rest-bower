@@ -1,4 +1,4 @@
-/*! crud-grid - v1.0.4 - 2015-02-02
+/*! crud-grid - v1.0.5 - 2015-02-02
 * https://github.com/flado/angular-crud-rest
 * Copyright (c) Florin.Adochiei@gmail.com 2015; Licensed MIT */
 angular.module('angular.crud.grid', []).run(['$templateCache', function($templateCache) {
