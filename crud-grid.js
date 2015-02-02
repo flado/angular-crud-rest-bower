@@ -1,6 +1,6 @@
-/*! crud-grid - v1.0.1 - 2014-12-01
+/*! crud-grid - v1.0.2 - 2015-02-02
 * https://github.com/flado/angular-crud-rest
-* Copyright (c) Florin.Adochiei@gmail.com 2014; Licensed MIT */
+* Copyright (c) Florin.Adochiei@gmail.com 2015; Licensed MIT */
 angular.module('angular.crud.grid', []).run(['$templateCache', function($templateCache) {
   $templateCache.put("crud-grid.tpl.html",
     "<!-- Search filter -->\n" +
@@ -232,12 +232,12 @@ angular.module('angular.crud.grid')
         require: '^form',
 
         link: function(scope, elem, attrs, formCtrl) {
-            $log.debug('>>>>> link <<<<<<<<<<', formCtrl);
+            $log.debug('>>>>> crudGrid >>> link <<<<<<<<<<', formCtrl);
 
             if (toastr) {
                 toastr.options.closeButton = true;
             } else {
-                $log.warn('toastr library is missing');
+                $log.warn('crudGrid: toastr library is missing');
             }
 
             scope.objects = [];
@@ -260,6 +260,7 @@ angular.module('angular.crud.grid')
             }
 
             //TODO: validate gridOptions mandatory properties & log default values
+            var uniqueConstraint = cope.gridOptions.uniqueConstraint; //unique columns constraint
 
             if (scope.gridOptions.searchConfig) {
                 if (scope.gridOptions.searchConfig.hideSearchPanel) {
@@ -299,7 +300,7 @@ angular.module('angular.crud.grid')
                 if (col.sortable === undefined) {
                     col.sortable = true; //by default every column is sortable
                 } else {
-                    $log.debug('# field: ', col.field, ' -> NOT SORTABLE');
+                    $log.debug('# crudGrid  ### field: ', col.field, ' -> NOT SORTABLE');
                 }
             }
 
@@ -320,14 +321,14 @@ angular.module('angular.crud.grid')
                 for(var i=0; i < scope.orderBy.length; i++) {
                     result.push(scope.orderBy[i].field  + ',' + scope.orderBy[i].sort);
                 }
-                $log.debug('## getSortParams: ', result);
+                $log.debug('## crudGrid ### getSortParams: ', result);
                 return result;
             };
 
             scope.searchLogic = { and: false }; //default search logic is OR if none specified in config
 
             scope.$watch('pagination.currentPage', function(oldValue, newValue){
-                $log.debug(">> pagination.currentPage: ", oldValue, ' -> ', newValue); //trigger to get new data here
+                $log.debug(">> crudGrid << pagination.currentPage: ", oldValue, ' -> ', newValue); //trigger to get new data here
                 scope.getData(function () {
                     scope.loading = false;
                 });
@@ -336,7 +337,7 @@ angular.module('angular.crud.grid')
             scope.pagination.currentPage = 1;
 
             scope.search = function() {  //apply search filter to referesh data
-                $log.debug('>> search() <<');
+                $log.debug('>> crudGrid - search() <<');
                 if (scope.pagination.currentPage > 1) {
                     scope.pagination.currentPage = 1; //this will trigger a getData() call
                 } else {
@@ -413,7 +414,7 @@ angular.module('angular.crud.grid')
 
                 $http(req)
                     .success(function (data, status) {
-                        $log.debug('successGetCallback:', data);
+                        $log.debug('crudGrid.successGetCallback:', data);
                         if (data._embedded) {
                             scope.objects = data._embedded[scope.gridOptions.resourceName]; //array of items
                         } else {
@@ -452,12 +453,12 @@ angular.module('angular.crud.grid')
                         // object.$animated = 'animated flash';
                     }
                 }
-                $log.debug("@ toggleEditMode: ", object);
+                $log.debug("@ crudGrid - toggleEditMode: ", object);
             };
 
 
             scope.addObject = function () {
-                $log.debug('addObject: ', scope.object);
+                $log.debug('crudGrid > addObject: ', scope.object);
                 scope.animateObject = undefined;
                 $timeout(function() {
                     // TO make sure the validation cycle has completed before going to save
@@ -502,7 +503,7 @@ angular.module('angular.crud.grid')
                 myData.request = req;
                 $http(req)
                 .success(function(data, status, headers, config) {
-                    $log.debug('successPostCallback: ', data);
+                    $log.debug('crudGrid.successPostCallback: ', data);
                     myData.response = data;
                     scope.notificationService.notify('ADD', status, myData);
 
@@ -584,7 +585,7 @@ angular.module('angular.crud.grid')
 
             scope.updateObject = function (object, elem) {
                 var editObj = object.$edit;
-                $log.debug('updateObject: ', editObj, elem);
+                $log.debug('crudGrid.updateObject: ', editObj, elem);
 
                 $timeout(function() {
                     // use $timeout tO make sure the validation cycle has completed before going to save
@@ -641,7 +642,14 @@ angular.module('angular.crud.grid')
             };
 
             scope.valueChanged = function(field, value) {
-                $log.debug('## valueChanged: ', field, value);
+                $log.debug('## crudGrid ## valueChanged: ', field, value);
+                if (uniqueConstraint.indexOf(field) > -1) {
+                    if (value['$old_' + field] != value[field]) {
+                        value.$uniqueDirty = true;
+                    } else {
+                        value.$uniqueDirty = false;
+                    }
+                }
             }
 
             scope.isInputForm = function(object, col) {
@@ -652,7 +660,7 @@ angular.module('angular.crud.grid')
             function isFormValid() {
                 var valid = formCtrl.$valid;
                 if (!valid) {
-                    $log.debug('# Form -> invalid');
+                    $log.debug('# crudGrid ## Form -> invalid');
                     scope.notificationService.notify('FORM_INVALID');
                 }
                 return valid;
@@ -661,7 +669,7 @@ angular.module('angular.crud.grid')
 
             scope.setViewOrderBy = function (col) {
                 var field = col.field;
-                $log.debug('>> setViewOrderBy: ', field, ' >> scope.orderBy: ', scope.orderBy);
+                $log.debug('>> crudGrid >> setViewOrderBy: ', field, ' >> scope.orderBy: ', scope.orderBy);
                 for(var i=0; i < scope.objects.length; i++) {
                     scope.objects[i].$animated = '';
                 }
@@ -690,7 +698,7 @@ angular.module('angular.crud.grid')
             };
 
             scope.hasError = function(formField, validation) {
-              $log.debug('> hasError -> formField: ', formField);
+              $log.debug('> crudGrid >> hasError -> formField: ', formField);
               var error = false;
               if (angular.isUndefined(formField)) {
                 error = false;
