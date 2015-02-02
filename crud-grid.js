@@ -1,4 +1,4 @@
-/*! crud-grid - v1.0.2 - 2015-02-02
+/*! crud-grid - v1.0.3 - 2015-02-02
 * https://github.com/flado/angular-crud-rest
 * Copyright (c) Florin.Adochiei@gmail.com 2015; Licensed MIT */
 angular.module('angular.crud.grid', []).run(['$templateCache', function($templateCache) {
@@ -217,6 +217,7 @@ angular.module('angular.crud.grid')
     };
 })
 
+
 .directive('crudGrid', function ($log, $http, $injector, $timeout, $filter) {
     return {
         restrict: 'A',
@@ -260,7 +261,6 @@ angular.module('angular.crud.grid')
             }
 
             //TODO: validate gridOptions mandatory properties & log default values
-            var uniqueConstraint = cope.gridOptions.uniqueConstraint; //unique columns constraint
 
             if (scope.gridOptions.searchConfig) {
                 if (scope.gridOptions.searchConfig.hideSearchPanel) {
@@ -583,6 +583,8 @@ angular.module('angular.crud.grid')
                 return cleanObj;
             };
 
+
+
             scope.updateObject = function (object, elem) {
                 var editObj = object.$edit;
                 $log.debug('crudGrid.updateObject: ', editObj, elem);
@@ -643,9 +645,13 @@ angular.module('angular.crud.grid')
 
             scope.valueChanged = function(field, value) {
                 $log.debug('## crudGrid ## valueChanged: ', field, value);
-                if (uniqueConstraint.indexOf(field) > -1) {
+                if (scope.gridOptions.uniqueConstraint && scope.gridOptions.uniqueConstraint.indexOf(field) > -1) {
                     if (value['$old_' + field] != value[field]) {
-                        value.$uniqueDirty = true;
+                        if (value[field] && value[field].trim().length == 0 && value['$old_' + field]==null) {
+                            value.$uniqueDirty = false;
+                        } else {
+                            value.$uniqueDirty = true;
+                        }
                     } else {
                         value.$uniqueDirty = false;
                     }
